@@ -6,4 +6,10 @@ import svgr from 'vite-plugin-svgr';
 export default defineConfig({
   base: '/dash',
   plugins: [reactRefresh(), svgr()],
+  server: {
+    port: 8000,
+    hmr: {
+      host: 'localhost',
+    },
+  },
 });
