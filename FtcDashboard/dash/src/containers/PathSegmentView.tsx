@@ -12,11 +12,10 @@ import { ReactComponent as AddIcon } from '../assets/icons/add.svg';
 import { ReactComponent as SaveIcon } from '../assets/icons/save.svg';
 import { ReactComponent as DownloadIcon } from '../assets/icons/file_download.svg';
 import { ReactComponent as DeleteIcon } from '../assets/icons/delete.svg';
-import PathSegment, {
-  SegmentData,
-  PointInput,
-  AngleInput,
-} from '../components/PathSegment';
+import PathSegment, { PointInput, AngleInput } from '../components/PathSegment';
+import { SegmentData } from '../store/types';
+import { useDispatch } from 'react-redux';
+import { uploadPathAction } from '../store/actions/path';
 
 type PathSegmentViewProps = BaseViewProps & BaseViewHeadingProps;
 
@@ -49,7 +48,7 @@ const PathSegmentView = ({
   isDraggable = false,
   isUnlocked = false,
 }: PathSegmentViewProps) => {
-  // const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const [startPose, setStartPose] = useState({
     x: 0,
     y: 0,
@@ -59,6 +58,7 @@ const PathSegmentView = ({
   const [segments, setSegments] = useState([] as SegmentData[]);
   const changeSegment = (i: number, val: Partial<SegmentData>) =>
     setSegments((prev) => {
+      console.log(i, val, prev);
       Object.assign(prev[i], val);
       return [...prev];
     });
@@ -70,14 +70,16 @@ const PathSegmentView = ({
         </BaseViewHeading>
         <BaseViewIcons>
           <BaseViewIconButton onClick={() => setSegments([])}>
-            <DeleteIcon className="w-6 h-6" />
+            <DeleteIcon className="w-6 h-6" fill="black" />
           </BaseViewIconButton>
           <BaseViewIconButton
             onClick={() => console.log(exportPath(startPose, segments))}
           >
-            <DownloadIcon className="w-6 h-6" />
+            <DownloadIcon className="w-6 h-6" fill="black" />
           </BaseViewIconButton>
-          <BaseViewIconButton {/*onClick={dispatch()}*/ ...[]}>
+          <BaseViewIconButton
+            onClick={() => dispatch(uploadPathAction(startPose, segments))}
+          >
             <SaveIcon className="w-6 h-6" />
           </BaseViewIconButton>
           <BaseViewIconButton
@@ -133,7 +135,7 @@ const PathSegmentView = ({
               }
             />
           </div>
-          <ol className="list-decimal marker:hover:cursor-move pl-4">
+          <ol className="list-decimal marker:hover:cursor-move pl-4" start={1}>
             {segments.map((segment, i) => (
               <PathSegment
                 key={i}

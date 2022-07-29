@@ -1,24 +1,12 @@
 import React, { createRef, MouseEventHandler, useState } from 'react';
 import PropTypes from 'prop-types';
-
-const actionTypes = ['Line', 'Spline', 'Wait'] as const;
-const headingTypes = ['Tangent', 'Constant', 'Linear', 'Spline'] as const;
-export type SegmentData = {
-  type: typeof actionTypes[number];
-  x: number;
-  y: number;
-  tangent: number;
-  time: number;
-  heading: number;
-  headingType: typeof headingTypes[number];
-};
+import { segmentTypes, headingTypes, SegmentData } from '../store/types';
 
 export const PointInput = ({
   valueX,
   valueY,
   onChange,
 }: {
-  // data: { x: number; y: number };
   valueX: number;
   valueY: number;
   onChange: (_: Partial<SegmentData>) => void;
@@ -26,23 +14,23 @@ export const PointInput = ({
   <>
     <input
       type="number"
-      min={-6}
-      max={6}
-      step={1}
+      min={-72}
+      max={72}
+      step={4}
       value={valueX}
       onChange={(evt) => onChange({ x: +evt.target.value })}
       className="w-16 h-8 p-2"
-      title="x-coordinate in feet"
+      title="x-coordinate in inches"
     />
     <input
       type="number"
-      min={-6}
-      max={6}
-      step={1}
+      min={-72}
+      max={72}
+      step={4}
       value={valueY}
       onChange={(evt) => onChange({ y: +evt.target.value })}
       className="w-16 h-8 p-2"
-      title="y-coordinate in feet"
+      title="y-coordinate in inches"
     />
   </>
 );
@@ -136,11 +124,11 @@ const PathSegment = ({
         value={data.type}
         onChange={(e) =>
           onChange(index, {
-            type: e.target.value as typeof actionTypes[number],
+            type: e.target.value as typeof segmentTypes[number],
           })
         }
       >
-        {actionTypes.map((enumValue) => (
+        {segmentTypes.map((enumValue) => (
           <option key={enumValue} value={enumValue}>
             {enumValue}
           </option>

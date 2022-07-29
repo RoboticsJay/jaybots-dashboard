@@ -1,3 +1,5 @@
+import { type } from 'os';
+
 export { RECEIVE_IMAGE } from './camera';
 export type { CameraState, ReceiveImageAction } from './camera';
 
@@ -92,3 +94,6 @@ export type {
   TelemetryItem,
   ReceiveTelemetryAction,
 } from './telemetry';
+
+export { segmentTypes, headingTypes } from './path';
+export type { SegmentData } from './path';
