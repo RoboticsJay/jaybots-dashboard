@@ -30,7 +30,11 @@ import com.acmerobotics.dashboard.message.redux.ReceiveOpModeList;
 import com.acmerobotics.dashboard.message.redux.ReceiveRobotStatus;
 import com.acmerobotics.dashboard.message.redux.ReceiveTelemetry;
 import com.acmerobotics.dashboard.message.redux.SaveConfig;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.dashboard.message.redux.UploadPath;
+//import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.dashboard.path.PathSegment;
+import com.acmerobotics.dashboard.path.reflection.FieldProvider;
+import com.acmerobotics.dashboard.path.reflection.ReflectionPath;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -56,9 +60,9 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.function.Consumer;
 import org.firstinspires.ftc.robotcore.external.function.Continuation;
 import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
-import org.firstinspires.ftc.robotcore.internal.opmode.AnnotatedOpModeClassFilter;
-import org.firstinspires.ftc.robotcore.internal.opmode.InstanceOpModeManager;
-import org.firstinspires.ftc.robotcore.internal.opmode.InstanceOpModeRegistrar;
+//import org.firstinspires.ftc.robotcore.internal.opmode.AnnotatedOpModeClassFilter;
+//import org.firstinspires.ftc.robotcore.internal.opmode.InstanceOpModeManager;
+//import org.firstinspires.ftc.robotcore.internal.opmode.InstanceOpModeRegistrar;
 import org.firstinspires.ftc.robotcore.internal.opmode.OpModeManagerImpl;
 import org.firstinspires.ftc.robotcore.internal.opmode.OpModeMeta;
 import org.firstinspires.ftc.robotcore.internal.opmode.RegisteredOpModes;
@@ -69,6 +73,7 @@ import org.firstinspires.ftc.robotserver.internal.webserver.MimeTypesUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -212,6 +217,10 @@ public class FtcDashboard implements OpModeManagerImpl.Notifications {
     private final Object configLock = new Object();
     private CustomVariable configRoot; // guarded by configLock
     private final List<String[]> varsToRemove = new ArrayList<>(); // guarded by configLock
+
+    private final Object pathLock = new Object();
+    private ArrayList<FieldProvider> pathFields; // guarded by pathLock
+
 
     private ExecutorService cameraStreamExecutor;
     private int imageQuality = DEFAULT_IMAGE_QUALITY;
@@ -376,6 +385,7 @@ public class FtcDashboard implements OpModeManagerImpl.Notifications {
                 .create();
 
         configRoot = ReflectionConfig.scanForClasses(IGNORED_PACKAGES);
+        pathFields = ReflectionPath.scanForClasses(IGNORED_PACKAGES);
 
         enableMenuItems = new ArrayList<>();
         disableMenuItems = new ArrayList<>();
@@ -966,6 +976,13 @@ public class FtcDashboard implements OpModeManagerImpl.Notifications {
             case RECEIVE_GAMEPAD_STATE: {
                 ReceiveGamepadState castMsg = (ReceiveGamepadState) msg;
                 updateGamepads(castMsg.getGamepad1(), castMsg.getGamepad2());
+                break;
+            }
+            case UPLOAD_PATH: {
+                synchronized (pathLock) {
+                    for (FieldProvider field : pathFields)
+                        field.set((UploadPath) msg);
+                }
                 break;
             }
             default:

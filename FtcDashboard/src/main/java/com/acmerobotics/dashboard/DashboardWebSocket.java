@@ -16,7 +16,7 @@ import fi.iki.elonen.NanoWSD;
 public class DashboardWebSocket extends NanoWSD.WebSocket {
     public static final String TAG = "DashboardWebSocket";
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     private FtcDashboard dashboard;
 
