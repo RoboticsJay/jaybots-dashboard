@@ -46,11 +46,15 @@ export default function AngleInput({
         onContextMenu={pickAngle}
       />
       <div
-        className={`${isPickingAngle ? 'absolute' : 'hidden'} top-0 left-0 w-screen h-screen`}
+        className={`${
+          isPickingAngle ? 'absolute' : 'hidden'
+        } top-0 left-0 w-screen h-screen`}
         onClick={(e) => {
           onChange({
             [name]: deg2rad(
-              +getComputedStyle(e.target as HTMLElement).getPropertyValue('--angle') + 90,
+              +getComputedStyle(e.target as HTMLElement).getPropertyValue(
+                '--angle',
+              ) + 180,
             ),
           });
           setIsPickingAngle(false);

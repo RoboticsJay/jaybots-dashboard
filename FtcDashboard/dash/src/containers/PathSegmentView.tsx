@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import BaseView, {
   BaseViewHeading,
@@ -9,12 +9,12 @@ import BaseView, {
   BaseViewIcons,
 } from './BaseView';
 import { ReactComponent as AddIcon } from '../assets/icons/add.svg';
-import { ReactComponent as SaveIcon } from '../assets/icons/save.svg';
+import { ReactComponent as UploadIcon } from '../assets/icons/file_upload.svg';
 import { ReactComponent as DownloadIcon } from '../assets/icons/file_download.svg';
 import { ReactComponent as DeleteIcon } from '../assets/icons/delete.svg';
 import PathSegment from '../components/PathSegment';
-import { SegmentData, Path } from '../store/types';
-import { connect, useDispatch, useSelector } from 'react-redux';
+import { SegmentData } from '../store/types';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   addSegmentPathAction,
   clearSegmentsPathAction,
@@ -53,7 +53,10 @@ resolution: 0.25
 version: 1
 `;
 
-const PathSegmentView = ({ isDraggable = false, isUnlocked = false }: PathSegmentViewProps) => {
+const PathSegmentView = ({
+  isDraggable = false,
+  isUnlocked = false,
+}: PathSegmentViewProps) => {
   const dispatch = useDispatch();
   const { start, segments } = useSelector((state: RootState) => ({
     ...state.path,
@@ -61,16 +64,38 @@ const PathSegmentView = ({ isDraggable = false, isUnlocked = false }: PathSegmen
   return (
     <BaseView isUnlocked={isUnlocked}>
       <div className="flex">
-        <BaseViewHeading isDraggable={isDraggable}>Path Segments</BaseViewHeading>
+        <BaseViewHeading isDraggable={isDraggable}>
+          Path Segments
+        </BaseViewHeading>
         <BaseViewIcons>
-          <BaseViewIconButton onClick={() => dispatch(clearSegmentsPathAction())}>
+          <BaseViewIconButton
+            onClick={() => dispatch(clearSegmentsPathAction())}
+          >
             <DeleteIcon className="w-6 h-6" fill="black" />
           </BaseViewIconButton>
-          <BaseViewIconButton onClick={() => console.log(exportPath(start, segments))}>
+          <BaseViewIconButton
+            onClick={() => {
+              const file = new Blob([exportPath(start, segments)], {
+                  type: 'yaml',
+                }),
+                a = document.createElement('a'),
+                url = URL.createObjectURL(file);
+              a.href = url;
+              a.download = 'path.yaml';
+              document.body.appendChild(a);
+              a.click();
+              setTimeout(function () {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+              }, 0);
+            }}
+          >
             <DownloadIcon className="w-6 h-6" fill="black" />
           </BaseViewIconButton>
-          <BaseViewIconButton onClick={() => dispatch(uploadPathAction())}>
-            <SaveIcon className="w-6 h-6" />
+          <BaseViewIconButton
+            onClick={() => dispatch(uploadPathAction(start, segments))}
+          >
+            <UploadIcon className="w-6 h-6" />
           </BaseViewIconButton>
           <BaseViewIconButton onClick={() => dispatch(addSegmentPathAction())}>
             <AddIcon className="w-6 h-6" />
@@ -107,7 +132,9 @@ const PathSegmentView = ({ isDraggable = false, isUnlocked = false }: PathSegmen
             {segments.map((segment, i) => (
               <PathSegment
                 key={i}
-                onChange={(newVals) => dispatch(setSegmentPathAction(i, newVals))}
+                onChange={(newVals) =>
+                  dispatch(setSegmentPathAction(i, newVals))
+                }
                 data={segment}
               />
             ))}

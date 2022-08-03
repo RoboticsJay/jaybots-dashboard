@@ -1,7 +1,12 @@
 import { Path, SegmentData } from '../types/path';
 
-export const uploadPathAction = () => ({
+export const uploadPathAction = (
+  start: Path['start'],
+  segments: Path['segments'],
+) => ({
   type: 'UPLOAD_PATH' as const,
+  start,
+  segments,
 });
 
 export const setStartPathAction = (newVals: Partial<Path['start']>) => ({
@@ -9,7 +14,10 @@ export const setStartPathAction = (newVals: Partial<Path['start']>) => ({
   newVals,
 });
 
-export const setSegmentPathAction = (i: number, newVals: Partial<SegmentData>) => ({
+export const setSegmentPathAction = (
+  i: number,
+  newVals: Partial<SegmentData>,
+) => ({
   type: 'SET_SEGMENT_PATH' as const,
   i,
   newVals,

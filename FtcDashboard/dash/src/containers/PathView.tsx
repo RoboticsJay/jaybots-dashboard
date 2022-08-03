@@ -1,16 +1,29 @@
-import React, { KeyboardEventHandler, useEffect, useRef, useState } from 'react';
+import React, {
+  KeyboardEventHandler,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 import fieldImageName from '../assets/field.png';
 
-import { ReactComponent as RefreshIcon } from '../assets/icons/refresh.svg';
 import BaseView, {
   BaseViewBody,
   BaseViewHeading,
   BaseViewHeadingProps,
   BaseViewProps,
 } from './BaseView';
-import { Stage, Layer, Image, Circle, Line, Text, Group } from 'react-konva';
+import {
+  Stage,
+  Layer,
+  Image,
+  Circle,
+  Line,
+  Text,
+  Group,
+  Shape,
+} from 'react-konva';
 
 import { RootState } from '../store/reducers';
 import useImage from 'use-image';
@@ -18,13 +31,16 @@ import {
   addSegmentPathAction,
   setSegmentPathAction,
   setStartPathAction,
+  uploadPathAction,
 } from '../store/actions/path';
+import { headingTypes } from '../store/types';
 
 const mod = (val: number, base: number) => (val + base) % base;
 const deg2rad = (deg: number) => mod((deg / 180) * Math.PI, 2 * Math.PI);
 const rad2deg = (rad: number) => mod((rad / Math.PI) * 180, 360);
 
-const clamp = (min: number, val: number, max: number) => Math.min(Math.max(min, val), max);
+const clamp = (min: number, val: number, max: number) =>
+  Math.min(Math.max(min, val), max);
 
 type PathSegmentViewProps = BaseViewProps & BaseViewHeadingProps;
 
@@ -32,11 +48,14 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
   const dispatch = useDispatch();
   const container = useRef<HTMLDivElement | null>(null);
   const [canvasSize, setCanvasSize] = useState(0);
-  const { path, overlay } = useSelector(({ path, telemetry }: RootState) => ({
+  const {
+    path: { start, segments },
+    overlay,
+  } = useSelector(({ path, telemetry }: RootState) => ({
     path,
     overlay: telemetry[telemetry.length - 1].fieldOverlay,
   }));
-  const points = [path.start].concat(path.segments);
+  const points = [start].concat(segments);
   const [image] = useImage(fieldImageName);
   useEffect(() => {
     if (container.current)
@@ -77,13 +96,12 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
             y: clamp(-72, points[i].y + dy * (+multiplier || 1), 72),
           })
         : setStartPathAction({
-            x: clamp(-72, path.start.x + dx * (+multiplier || 1), 72),
-            y: clamp(-72, path.start.y + dy * (+multiplier || 1), 72),
+            x: clamp(-72, start.x + dx * (+multiplier || 1), 72),
+            y: clamp(-72, start.y + dy * (+multiplier || 1), 72),
           }),
     );
   const handleShortcuts: KeyboardEventHandler<HTMLDivElement> = (e) => {
-    const key = e.nativeEvent.key;
-    const ctrl = e.nativeEvent.ctrlKey;
+    const key = `${e.nativeEvent.ctrlKey ? '^' : ''}${e.nativeEvent.key}`;
     if (/^[0-9]$/.test(key)) setMultiplier((prev) => prev + key);
     else if (pickingAngle) {
       if (key === 'j') 0;
@@ -93,30 +111,66 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
       else return;
     } else {
       if (key === 'h') movePoint(selected, -4);
+      else if (key === 'j') movePoint(selected, 0, -4);
+      else if (key === 'k') movePoint(selected, 0, 4);
       else if (key === 'l') movePoint(selected, 4);
       else if (key === 'H') movePoint(selected, -1);
-      else if (key === 'L') movePoint(selected, 1);
-      else if (key === 'j') {
-        if (ctrl) setSelected((prev) => clamp(0, prev - 1, path.segments.length));
-        else movePoint(selected, 0, -4);
-      } else if (key === 'k') {
-        if (ctrl) setSelected((prev) => clamp(0, prev + 1, path.segments.length));
-        else movePoint(selected, 0, 4);
-      } else if (key === 'J') movePoint(selected, 0, -1);
+      else if (key === 'J') movePoint(selected, 0, -1);
       else if (key === 'K') movePoint(selected, 0, 1);
+      else if (key === 'L') movePoint(selected, 1);
+      else if (key === '^j')
+        setSelected((prev) => clamp(0, prev - 1, segments.length));
+      else if (key === '^k')
+        setSelected((prev) => clamp(0, prev + 1, segments.length));
       else if (key === 'a') {
         dispatch(addSegmentPathAction());
         setSelected(points.length);
-      } else if (key === 't') pickAngle('tangent');
-      else if (key === 'f') pickAngle('heading');
-      else if (key === 'd') dispatch(setSegmentPathAction(selected - 1, { time: +multiplier }));
+      } else if (key === 't')
+        dispatch(
+          selected
+            ? setSegmentPathAction(selected - 1, {
+                tangent: deg2rad(+multiplier),
+              })
+            : setStartPathAction({ tangent: deg2rad(+multiplier) }),
+        );
+      else if (key === 'T') pickAngle('tangent');
+      else if (key === 'f')
+        dispatch(
+          selected
+            ? setSegmentPathAction(selected - 1, {
+                heading: deg2rad(+multiplier),
+              })
+            : setStartPathAction({ heading: deg2rad(+multiplier) }),
+        );
+      else if (key === 'F') pickAngle('heading');
+      else if (key === 'i')
+        dispatch(
+          setSegmentPathAction(selected - 1, {
+            headingType:
+              headingTypes[
+                multiplier
+                  ? clamp(0, +multiplier - 1, 3)
+                  : (headingTypes.indexOf(segments[selected - 1].headingType) +
+                      1) %
+                    4
+              ],
+          }),
+        );
+      else if (key === 'd')
+        dispatch(setSegmentPathAction(selected - 1, { time: +multiplier }));
       else if (key === 's') {
-        if (selected) dispatch(setSegmentPathAction(selected - 1, { type: 'Spline' }));
+        if (selected)
+          dispatch(setSegmentPathAction(selected - 1, { type: 'Spline' }));
       } else if (key === 'S') {
-        if (selected) dispatch(setSegmentPathAction(selected - 1, { type: 'Line' }));
+        if (selected)
+          dispatch(setSegmentPathAction(selected - 1, { type: 'Line' }));
       } else if (key === 'w') {
-        if (selected) dispatch(setSegmentPathAction(selected - 1, { type: 'Wait' }));
-      } else if (key === 'g') setSelected(clamp(0, +multiplier, points.length - 1));
+        if (selected)
+          dispatch(setSegmentPathAction(selected - 1, { type: 'Wait' }));
+      } else if (key === 'g')
+        setSelected(clamp(0, +multiplier, points.length - 1));
+      else if (key === 'G') setSelected(points.length - 1);
+      else if (key === 'r') dispatch(uploadPathAction(start, segments));
       else if (key === 'Escape') 0;
       else return;
 
@@ -175,13 +229,17 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
                 )),
             )}
           </Layer>
-          <Layer scale={{ x: canvasSize / 144, y: -canvasSize / 144 }} hitGraphEnabled={true}>
+          <Layer
+            scale={{ x: canvasSize / 144, y: -canvasSize / 144 }}
+            hitGraphEnabled={true}
+          >
             <Circle
-              x={path.start.x}
-              y={path.start.y}
+              x={start.x}
+              y={start.y}
               radius={2}
               fill={selected === 0 ? 'yellow' : 'green'}
               draggable
+              onMouseDown={() => setSelected(0)}
               onDragEnd={({ target }) =>
                 dispatch(
                   setStartPathAction({
@@ -194,15 +252,20 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
                 target.x(clamp(-72, target.x(), 72));
                 target.y(clamp(-72, target.y(), 72));
               }}
-              onMouseOver={() => container.current?.style.setProperty('cursor', 'pointer')}
-              onMouseOut={() => container.current?.style.setProperty('cursor', 'default')}
+              onMouseOver={() =>
+                container.current?.style.setProperty('cursor', 'pointer')
+              }
+              onMouseOut={() =>
+                container.current?.style.setProperty('cursor', 'default')
+              }
             />
-            {path.segments.map((s, i) => (
+            {segments.map((s, i) => (
               <Group
                 key={i}
                 x={s.x}
                 y={s.y}
                 draggable
+                onMouseDown={() => setSelected(i + 1)}
                 onDragEnd={({ target }) =>
                   dispatch(
                     setSegmentPathAction(i, {
@@ -215,12 +278,22 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
                   target.x(clamp(-72, target.x(), 72));
                   target.y(clamp(-72, target.y(), 72));
                 }}
-                onMouseOver={() => container.current?.style.setProperty('cursor', 'pointer')}
-                onMouseOut={() => container.current?.style.setProperty('cursor', 'default')}
+                onMouseOver={() =>
+                  container.current?.style.setProperty('cursor', 'pointer')
+                }
+                onMouseOut={() =>
+                  container.current?.style.setProperty('cursor', 'default')
+                }
               >
                 <Circle
                   radius={2}
-                  fill={selected === i + 1 ? 'yellow' : s.type === 'Spline' ? 'blue' : 'purple'}
+                  fill={
+                    selected === i + 1
+                      ? 'yellow'
+                      : s.type === 'Spline'
+                      ? 'blue'
+                      : 'purple'
+                  }
                 />
                 <Text
                   key={i}
@@ -236,18 +309,24 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
           </Layer>
         </Stage>
         <div
-          className={`${pickingAngle ? 'absolute' : 'hidden'} top-0 left-0 w-screen h-screen`}
+          className={`${
+            pickingAngle ? 'absolute' : 'hidden'
+          } top-0 left-0 w-screen h-screen`}
           onClick={(e) => {
             dispatch(
               selected
                 ? setSegmentPathAction(selected - 1, {
                     [pickingAngle]: deg2rad(
-                      +getComputedStyle(e.target as HTMLElement).getPropertyValue('--angle') + 90,
+                      +getComputedStyle(
+                        e.target as HTMLElement,
+                      ).getPropertyValue('--angle') + 180,
                     ),
                   })
                 : setStartPathAction({
                     [pickingAngle]: deg2rad(
-                      +getComputedStyle(e.target as HTMLElement).getPropertyValue('--angle') + 90,
+                      +getComputedStyle(
+                        e.target as HTMLElement,
+                      ).getPropertyValue('--angle') + 180,
                     ),
                   }),
             );

@@ -44,14 +44,22 @@ const PathSegment = ({
       ) : (
         <>
           <div className="self-center">to</div>
-          <PointInput valueX={data.x} valueY={data.y} onChange={(newVals) => onChange(newVals)} />
+          <PointInput
+            valueX={data.x}
+            valueY={data.y}
+            onChange={(newVals) => onChange(newVals)}
+          />
         </>
       )}
     </div>
     {data.type === 'Spline' && (
       <div className="flex self-center gap-2 mb-2">
         <div className="flex-grow self-center">End Tangent:</div>
-        <AngleInput name="tangent" value={data.tangent} onChange={(newVals) => onChange(newVals)} />
+        <AngleInput
+          name="tangent"
+          value={data.tangent}
+          onChange={(newVals) => onChange(newVals)}
+        />
       </div>
     )}
     {data.type !== 'Wait' && (
