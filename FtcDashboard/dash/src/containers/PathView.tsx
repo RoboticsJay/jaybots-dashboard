@@ -14,16 +14,7 @@ import BaseView, {
   BaseViewHeadingProps,
   BaseViewProps,
 } from './BaseView';
-import {
-  Stage,
-  Layer,
-  Image,
-  Circle,
-  Line,
-  Text,
-  Group,
-  Shape,
-} from 'react-konva';
+import { Stage, Layer, Image, Circle, Line, Text, Group } from 'react-konva';
 
 import { RootState } from '../store/reducers';
 import useImage from 'use-image';
@@ -33,7 +24,8 @@ import {
   setStartPathAction,
   uploadPathAction,
 } from '../store/actions/path';
-import { headingTypes } from '../store/types';
+import { headingTypes, DrawOp } from '../store/types';
+import { zip } from 'lodash';
 
 const mod = (val: number, base: number) => (val + base) % base;
 const deg2rad = (deg: number) => mod((deg / 180) * Math.PI, 2 * Math.PI);
@@ -148,11 +140,10 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
           setSegmentPathAction(selected - 1, {
             headingType:
               headingTypes[
+                // prettier-ignore
                 multiplier
                   ? clamp(0, +multiplier - 1, 3)
-                  : (headingTypes.indexOf(segments[selected - 1].headingType) +
-                      1) %
-                    4
+                  : (headingTypes.indexOf(segments[selected - 1].headingType) + 1) % 4
               ],
           }),
         );
@@ -177,6 +168,72 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
       setMultiplier('');
     }
     e.preventDefault();
+  };
+  const drawOverlay = (
+    acc: {
+      fill?: string;
+      stroke?: string;
+      strokeWidth?: number;
+      shapes: { type: 'Line' }[];
+    },
+    op: DrawOp,
+    i: number,
+  ) => {
+    if (op.type === 'fill') acc.fill = op.color;
+    else if (op.type === 'stroke') acc.stroke = op.color;
+    else if (op.type === 'strokeWidth') acc.strokeWidth = op.width;
+    else if (op.type === 'circle')
+      acc.shapes.push(
+        <Circle
+          key={i}
+          x={op.x}
+          y={op.y}
+          radius={op.radius}
+          fill={acc.fill}
+          stroke={acc.stroke}
+          strokeWidth={acc.strokeWidth}
+        />,
+      );
+    else if (op.type === 'polygon' || op.type === 'polyline')
+      acc.shapes.push(
+        <Line
+          key={i}
+          closed={op.type === 'polygon'}
+          points={zip(op.xPoints, op.yPoints).flat() as number[]}
+          fill={acc.fill}
+          stroke={acc.stroke}
+          strokeWidth={acc.strokeWidth}
+        />,
+      );
+    else if (op.type === 'spline')
+      acc.shapes.push(
+        <Line
+          key={i}
+          points={Array(200)
+            .fill(0)
+            .map((_, i) => {
+              const { ax, bx, cx, dx, ex, fx, ay, by, cy, dy, ey, fy } = op;
+              const t = i / 200;
+              return [
+                (ax * t + bx) * (t * t * t * t) +
+                  cx * (t * t * t) +
+                  dx * (t * t) +
+                  ex * t +
+                  fx,
+                (ay * t + by) * (t * t * t * t) +
+                  cy * (t * t * t) +
+                  dy * (t * t) +
+                  ey * t +
+                  fy,
+              ];
+            })
+            .flat()}
+          fill={acc.fill}
+          stroke={acc.stroke}
+          strokeWidth={acc.strokeWidth}
+        />,
+      );
+    return acc;
   };
 
   return (
@@ -229,10 +286,17 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
                 )),
             )}
           </Layer>
-          <Layer
-            scale={{ x: canvasSize / 144, y: -canvasSize / 144 }}
-            hitGraphEnabled={true}
-          >
+          <Layer scale={{ x: canvasSize / 144, y: -canvasSize / 144 }}>
+            {
+              overlay.ops.reduce(drawOverlay, {
+                fill: undefined,
+                stroke: undefined,
+                strokeWidth: undefined,
+                shapes: [],
+              }).shapes
+            }
+          </Layer>
+          <Layer scale={{ x: canvasSize / 144, y: -canvasSize / 144 }}>
             <Circle
               x={start.x}
               y={start.y}

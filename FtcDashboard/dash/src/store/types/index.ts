@@ -91,6 +91,7 @@ export type {
   Telemetry,
   TelemetryItem,
   ReceiveTelemetryAction,
+  DrawOp,
 } from './telemetry';
 
 export { segmentTypes, headingTypes } from './path';

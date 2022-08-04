@@ -70,10 +70,9 @@ public class DashboardWebSocket extends NanoWSD.WebSocket {
     public void send(Message message) {
         try {
             String messageStr = dashboard.toJson(message);
-            if (DEBUG && message.getType() != MessageType.RECEIVE_ROBOT_STATUS &&
-                    message.getType() != MessageType.RECEIVE_TELEMETRY) {
-                Log.i(TAG, "[SENT]\t" + messageStr);
-            }
+            if (DEBUG && message.getType() != MessageType.RECEIVE_ROBOT_STATUS 
+                && message.getType() != MessageType.RECEIVE_TELEMETRY
+            ) Log.i(TAG, "[SENT]\t" + messageStr);
             send(messageStr);
         } catch (IOException e) {
             Log.w(TAG, e);
