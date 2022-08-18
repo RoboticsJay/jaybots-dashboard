@@ -113,7 +113,7 @@ class OpModeView extends Component<OpModeViewProps, OpModeViewState> {
   renderInitButton() {
     return (
       <ActionButton
-        className="bg-blue-200 border-blue-300"
+        className="border-blue-300 bg-blue-200"
         onClick={() => this.props.initOpMode(this.state.selectedOpMode)}
       >
         Init
@@ -124,7 +124,7 @@ class OpModeView extends Component<OpModeViewProps, OpModeViewState> {
   renderStartButton() {
     return (
       <ActionButton
-        className="bg-green-200 border-green-300"
+        className="border-green-300 bg-green-200"
         onClick={() => this.props.startOpMode()}
       >
         Start
@@ -135,7 +135,7 @@ class OpModeView extends Component<OpModeViewProps, OpModeViewState> {
   renderStopButton() {
     return (
       <ActionButton
-        className="bg-red-200 border-red-300"
+        className="border-red-300 bg-red-200"
         onClick={() => this.props.stopOpMode()}
       >
         Stop
@@ -211,25 +211,25 @@ class OpModeView extends Component<OpModeViewProps, OpModeViewState> {
               <BaseViewIcon>
                 {gamepadsSupported ? (
                   <GamepadIcon
-                    className="w-6 h-6"
+                    className="h-6 w-6"
                     style={{
                       opacity: gamepad1Connected ? 1.0 : 0.3,
                     }}
                   />
                 ) : (
-                  <GamepadNotSupportedIcon className="w-6 h-6" />
+                  <GamepadNotSupportedIcon className="h-6 w-6" />
                 )}
               </BaseViewIcon>
               <BaseViewIcon>
                 {gamepadsSupported ? (
                   <GamepadIcon
-                    className="w-6 h-6"
+                    className="h-6 w-6"
                     style={{
                       opacity: gamepad2Connected ? 1.0 : 0.3,
                     }}
                   />
                 ) : (
-                  <GamepadNotSupportedIcon className="w-6 h-6" />
+                  <GamepadNotSupportedIcon className="h-6 w-6" />
                 )}
               </BaseViewIcon>
             </BaseViewIcons>
@@ -244,7 +244,7 @@ class OpModeView extends Component<OpModeViewProps, OpModeViewState> {
         </div>
         <BaseViewBody>
           <select
-            className="bg-gray-200 rounded p-1 pr-6 m-1 mr-2 border border-gray-300 shadow-md disabled:shadow-none disabled:text-gray-600 transition"
+            className="m-1 mr-2 rounded border border-gray-300 bg-gray-200 p-1 pr-6 shadow-md transition disabled:text-gray-600 disabled:shadow-none"
             value={this.state.selectedOpMode}
             disabled={
               activeOpMode !== STOP_OP_MODE_TAG || opModeList.length === 0

@@ -51,10 +51,10 @@ const ConfigView = ({
           <BaseViewIconButton
             onClick={() => onSave(getModifiedDiff(configRoot))}
           >
-            <SaveIcon className="w-6 h-6" />
+            <SaveIcon className="h-6 w-6" />
           </BaseViewIconButton>
           <BaseViewIconButton onClick={onRefresh}>
-            <RefreshIcon className="w-6 h-6" />
+            <RefreshIcon className="h-6 w-6" />
           </BaseViewIconButton>
         </BaseViewIcons>
       </div>

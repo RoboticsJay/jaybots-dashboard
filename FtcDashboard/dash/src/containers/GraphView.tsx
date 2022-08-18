@@ -164,20 +164,20 @@ class GraphView extends Component<GraphViewProps, GraphViewState> {
           </BaseViewHeading>
           <BaseViewIcons>
             {this.state.graphing && this.state.keys.length !== 0 && (
-              <BaseViewIconButton className="w-8 h-8 icon-btn">
+              <BaseViewIconButton className="icon-btn h-8 w-8">
                 {this.state.paused ? (
-                  <PlayIcon className="w-6 h-6" onClick={this.play} />
+                  <PlayIcon className="h-6 w-6" onClick={this.play} />
                 ) : (
-                  <PauseIcon className="w-6 h-6" onClick={this.pause} />
+                  <PauseIcon className="h-6 w-6" onClick={this.pause} />
                 )}
               </BaseViewIconButton>
             )}
 
             <BaseViewIconButton>
               {this.state.graphing ? (
-                <CloseIcon className="w-6 h-6 text-black" onClick={this.stop} />
+                <CloseIcon className="h-6 w-6 text-black" onClick={this.stop} />
               ) : (
-                <ChartIcon className="w-6 h-6" onClick={this.start} />
+                <ChartIcon className="h-6 w-6" onClick={this.start} />
               )}
             </BaseViewIconButton>
           </BaseViewIcons>
@@ -204,7 +204,7 @@ class GraphView extends Component<GraphViewProps, GraphViewState> {
                   />
                 </div>
                 <div className="mt-4">
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center justify-between">
                     <h3 className="font-medium">Options:</h3>
                   </div>
                   <div className="ml-3">

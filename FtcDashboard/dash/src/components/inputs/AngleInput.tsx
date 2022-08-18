@@ -41,14 +41,14 @@ export default function AngleInput({
         step={15}
         value={rad2deg(value).toFixed()}
         onChange={(e) => onChange({ [name]: deg2rad(+e.target.value) })}
-        className="w-16 h-8 p-2"
+        className="h-8 w-16 p-2"
         title={`${name} in degrees`}
         onContextMenu={pickAngle}
       />
       <div
         className={`${
           isPickingAngle ? 'absolute' : 'hidden'
-        } top-0 left-0 w-screen h-screen`}
+        } top-0 left-0 h-screen w-screen`}
         onClick={(e) => {
           onChange({
             [name]: deg2rad(
@@ -66,7 +66,7 @@ export default function AngleInput({
       >
         <div
           ref={angleSelecter}
-          className="direction-selector absolute w-16 h-16 rounded-full"
+          className="direction-selector absolute h-16 w-16 rounded-full"
         ></div>
       </div>
     </>

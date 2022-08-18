@@ -23,6 +23,7 @@ import {
   setSegmentPathAction,
   setStartPathAction,
   uploadPathAction,
+  setPathAction,
 } from '../store/actions/path';
 import { headingTypes, DrawOp } from '../store/types';
 import { zip } from 'lodash';
@@ -60,13 +61,18 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
   const [selected, setSelected] = useState(0);
   const [pickingAngle, setPickingAngle] = useState('');
   const angleSelecter = useRef<HTMLDivElement | null>(null);
+  useEffect(
+    () => setSelected(clamp(0, selected, segments.length)),
+    [points, selected],
+  );
   const pickAngle = (name: string) => {
     if (!angleSelecter.current || !container.current) return;
     setPickingAngle(name);
-    const rect = container.current.firstElementChild?.getBoundingClientRect() ?? {
-      x: 0,
-      y: 0,
-    };
+    const rect =
+      container.current.firstElementChild?.getBoundingClientRect() ?? {
+        x: 0,
+        y: 0,
+      };
     const pageX = rect.x + canvasSize * (points[selected].x / 144 + 0.5);
     const pageY = rect.y + canvasSize * (-points[selected].y / 144 + 0.5);
 
@@ -93,6 +99,7 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
           }),
     );
   const handleShortcuts: KeyboardEventHandler<HTMLDivElement> = (e) => {
+    console.log(selected);
     const key = `${e.nativeEvent.ctrlKey ? '^' : ''}${e.nativeEvent.key}`;
     if (/^[0-9]$/.test(key)) setMultiplier((prev) => prev + key);
     else if (pickingAngle) {
@@ -117,7 +124,13 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
       else if (key === 'a') {
         dispatch(addSegmentPathAction());
         setSelected(points.length);
-      } else if (key === 't')
+      } else if (key === 'x')
+        dispatch(
+          setPathAction({
+            segments: segments.filter((_, i) => i !== selected - 1),
+          }),
+        );
+      else if (key === 't')
         dispatch(
           selected
             ? setSegmentPathAction(selected - 1, {
@@ -142,8 +155,8 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
               headingTypes[
                 // prettier-ignore
                 multiplier
-                  ? clamp(0, +multiplier - 1, 3)
-                  : (headingTypes.indexOf(segments[selected - 1].headingType) + 1) % 4
+                ? clamp(0, +multiplier - 1, 3)
+                : (headingTypes.indexOf(segments[selected - 1].headingType) + 1) % 4
               ],
           }),
         );
@@ -240,7 +253,7 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
     <BaseView isUnlocked={isUnlocked}>
       <div className="flex">
         <BaseViewHeading isDraggable={isDraggable}>Draw a Path</BaseViewHeading>
-        <span className="text-lg px-4 py-2">{multiplier}</span>
+        <span className="px-4 py-2 text-lg">{multiplier}</span>
       </div>
       <BaseViewBody
         ref={container}
@@ -375,7 +388,7 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
         <div
           className={`${
             pickingAngle ? 'absolute' : 'hidden'
-          } top-0 left-0 w-screen h-screen`}
+          } top-0 left-0 h-screen w-screen`}
           onClick={(e) => {
             dispatch(
               selected
@@ -403,7 +416,7 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
         >
           <div
             ref={angleSelecter}
-            className="direction-selector absolute w-16 h-16 rounded-full"
+            className="direction-selector absolute h-16 w-16 rounded-full"
           ></div>
         </div>
       </BaseViewBody>

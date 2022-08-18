@@ -9,6 +9,11 @@ export const uploadPathAction = (
   segments,
 });
 
+export const setPathAction = (newVals: Partial<Path>) => ({
+  type: 'SET_PATH' as const,
+  newVals,
+});
+
 export const setStartPathAction = (newVals: Partial<Path['start']>) => ({
   type: 'SET_START_PATH' as const,
   newVals,
@@ -21,11 +26,6 @@ export const setSegmentPathAction = (
   type: 'SET_SEGMENT_PATH' as const,
   i,
   newVals,
-});
-
-export const clearSegmentsPathAction = () => ({
-  type: 'SET_PATH' as const,
-  newVals: { segments: [] },
 });
 
 export const addSegmentPathAction = () => ({

@@ -12,9 +12,9 @@ const PathSegment = ({
   onChange: (val: Partial<SegmentData>) => void;
 }) => (
   <li className="my-4 pl-2">
-    <div className="flex gap-2 mb-2">
+    <div className="mb-2 flex gap-2">
       <select
-        className="flex-grow valid rounded py-0"
+        className="valid flex-grow rounded py-0"
         value={data.type}
         onChange={(e) =>
           onChange({
@@ -37,7 +37,7 @@ const PathSegment = ({
             step={0.5}
             value={data.time}
             onChange={(evt) => onChange({ time: +evt.target.value })}
-            className="w-16 h-8 p-2"
+            className="h-8 w-16 p-2"
             title="Time in Seconds"
           />
         </>
@@ -53,7 +53,7 @@ const PathSegment = ({
       )}
     </div>
     {data.type === 'Spline' && (
-      <div className="flex self-center gap-2 mb-2">
+      <div className="mb-2 flex gap-2 self-center">
         <div className="flex-grow self-center">End Tangent:</div>
         <AngleInput
           name="tangent"
@@ -63,10 +63,10 @@ const PathSegment = ({
       </div>
     )}
     {data.type !== 'Wait' && (
-      <div className="flex self-center gap-2 mb-2">
+      <div className="mb-2 flex gap-2 self-center">
         <div className="self-center">Heading:</div>
         <select
-          className="flex-grow valid rounded h-8 py-0"
+          className="valid h-8 flex-grow rounded py-0"
           value={data.headingType}
           onChange={(e) =>
             onChange({

@@ -2,10 +2,10 @@
 import { Path, SegmentData } from '../types';
 import {
   addSegmentPathAction,
-  clearSegmentsPathAction,
   setSegmentPathAction,
   setStartPathAction,
   uploadPathAction,
+  setPathAction,
 } from '../actions/path';
 
 const initialState: Path = {
@@ -24,30 +24,26 @@ const pathReducer = (
     | ReturnType<typeof uploadPathAction>
     | ReturnType<typeof setStartPathAction>
     | ReturnType<typeof setSegmentPathAction>
-    | ReturnType<typeof clearSegmentsPathAction>
+    | ReturnType<typeof setPathAction>
     | ReturnType<typeof addSegmentPathAction>,
 ) => {
-  switch (action.type) {
-    case 'SET_PATH':
-      return { ...state, ...action };
-    case 'ADD_SEGMENT_PATH':
-      state.segments.push({
-        type: 'Spline',
-        x: 0,
-        y: 0,
-        tangent: 0,
-        time: 0,
-        heading: 0,
-        headingType: 'Tangent',
-      });
-      return state;
-    case 'SET_START_PATH':
-      Object.assign(state.start, action.newVals);
-      return state;
-    case 'SET_SEGMENT_PATH':
-      Object.assign(state.segments[action.i], action.newVals);
-    // case 'UPLOAD_PATH':
-  }
+  if (action.type === 'SET_PATH') Object.assign(state, action.newVals);
+  if (action.type === 'ADD_SEGMENT_PATH')
+    state.segments.push({
+      type: 'Spline',
+      x: 0,
+      y: 0,
+      tangent: 0,
+      time: 0,
+      heading: 0,
+      headingType: 'Tangent',
+    });
+  if (action.type === 'SET_START_PATH')
+    Object.assign(state.start, action.newVals);
+  if (action.type === 'SET_SEGMENT_PATH')
+    Object.assign(state.segments[action.i], action.newVals);
+  // case 'UPLOAD_PATH':
+
   return state;
 };
 

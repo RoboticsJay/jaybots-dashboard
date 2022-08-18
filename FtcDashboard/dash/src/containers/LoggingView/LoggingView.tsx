@@ -126,13 +126,13 @@ const MenuItemSwitch = ({
       onChange={onChange}
       className={`${
         checked ? 'bg-indigo-600' : 'bg-gray-200'
-      } relative inline-flex flex-shrink-0 h-4 transition-colors duration-200 ease-in-out border-2 border-transparent rounded-full cursor-pointer w-7 focus:outline-none focus:shadow-outline`}
+      } focus:outline-none relative inline-flex h-4 w-7 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:shadow-outline`}
     >
       {({ checked }) => (
         <span
           className={`${
             checked ? 'translate-x-3' : 'translate-x-0'
-          } inline-block w-3 h-3 transition duration-200 ease-in-out transform bg-white rounded-full`}
+          } inline-block h-3 w-3 transform rounded-full bg-white transition duration-200 ease-in-out`}
         />
       )}
     </Switch>
@@ -299,18 +299,18 @@ const LoggingView = ({
     <BaseView isUnlocked={isUnlocked}>
       <div className="flex-center">
         <BaseViewHeading isDraggable={isDraggable}>Logging</BaseViewHeading>
-        <div className="flex items-center mr-3 space-x-1">
+        <div className="mr-3 flex items-center space-x-1">
           <button
-            className={`icon-btn w-8 h-8 ${
+            className={`icon-btn h-8 w-8 ${
               isDownloadable ? '' : 'border-gray-400'
             }`}
             onClick={downloadCSV}
             ref={downloadButtonRef}
           >
             {isDownloadable ? (
-              <DownloadSVG className="w-6 h-6" />
+              <DownloadSVG className="h-6 w-6" />
             ) : (
-              <DownloadOffSVG className="w-6 h-6 text-neutral-gray-400" />
+              <DownloadOffSVG className="h-6 w-6 text-neutral-gray-400" />
             )}
             <ToolTip
               hoverRef={downloadButtonRef}
@@ -322,12 +322,12 @@ const LoggingView = ({
           <div className="relative inline-block">
             <button
               ref={keyShowingMenuButtonRef}
-              className="icon-btn w-8 h-8"
+              className="icon-btn h-8 w-8"
               onClick={() =>
                 setIsKeyShowingMenuVisible(!isKeyShowingMenuVisible)
               }
             >
-              <MoreVertSVG className="w-6 h-6" />
+              <MoreVertSVG className="h-6 w-6" />
             </button>
             <Transition
               show={isKeyShowingMenuVisible}
@@ -340,10 +340,10 @@ const LoggingView = ({
             >
               <div
                 ref={keyShowingMenuRef}
-                className="absolute right-0 mt-2 py-2 origin-top-right bg-white border border-gray-200 rounded-md shadow-lg outline-none"
+                className="outline-none absolute right-0 mt-2 origin-top-right rounded-md border border-gray-200 bg-white py-2 shadow-lg"
                 style={{ zIndex: 99 }}
               >
-                <p className="text-sm leading-5 border-b border-gray-100 pl-3 pb-1 mb-1 text-gray-500">
+                <p className="mb-1 border-b border-gray-100 pl-3 pb-1 text-sm leading-5 text-gray-500">
                   Toggle Items
                 </p>
                 <MenuItemSwitch

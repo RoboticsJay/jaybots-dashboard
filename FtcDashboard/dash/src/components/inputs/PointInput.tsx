@@ -18,7 +18,7 @@ const PointInput = ({
       step={4}
       value={valueX}
       onChange={(evt) => onChange({ x: +evt.target.value })}
-      className="w-16 h-8 p-2"
+      className="h-8 w-16 p-2"
       title="x-coordinate in inches"
     />
     <input
@@ -28,7 +28,7 @@ const PointInput = ({
       step={4}
       value={valueY}
       onChange={(evt) => onChange({ y: +evt.target.value })}
-      className="w-16 h-8 p-2"
+      className="h-8 w-16 p-2"
       title="y-coordinate in inches"
     />
   </>

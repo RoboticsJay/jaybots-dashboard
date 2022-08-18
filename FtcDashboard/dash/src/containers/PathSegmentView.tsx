@@ -17,7 +17,7 @@ import { SegmentData } from '../store/types';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   addSegmentPathAction,
-  clearSegmentsPathAction,
+  setPathAction,
   setSegmentPathAction,
   setStartPathAction,
   uploadPathAction,
@@ -69,9 +69,9 @@ const PathSegmentView = ({
         </BaseViewHeading>
         <BaseViewIcons>
           <BaseViewIconButton
-            onClick={() => dispatch(clearSegmentsPathAction())}
+            onClick={() => dispatch(setPathAction({ segments: [] }))}
           >
-            <DeleteIcon className="w-6 h-6" fill="black" />
+            <DeleteIcon className="h-6 w-6" fill="black" />
           </BaseViewIconButton>
           <BaseViewIconButton
             onClick={() => {
@@ -90,21 +90,21 @@ const PathSegmentView = ({
               }, 0);
             }}
           >
-            <DownloadIcon className="w-6 h-6" fill="black" />
+            <DownloadIcon className="h-6 w-6" fill="black" />
           </BaseViewIconButton>
           <BaseViewIconButton
             onClick={() => dispatch(uploadPathAction(start, segments))}
           >
-            <UploadIcon className="w-6 h-6" />
+            <UploadIcon className="h-6 w-6" />
           </BaseViewIconButton>
           <BaseViewIconButton onClick={() => dispatch(addSegmentPathAction())}>
-            <AddIcon className="w-6 h-6" />
+            <AddIcon className="h-6 w-6" />
           </BaseViewIconButton>
         </BaseViewIcons>
       </div>
       <BaseViewBody className="flex flex-col">
         <div className="flex-grow">
-          <div className="flex self-center gap-2 mb-2">
+          <div className="mb-2 flex gap-2 self-center">
             <div className="flex-grow self-center">Start at</div>
             <PointInput
               valueX={start.x}
@@ -112,7 +112,7 @@ const PathSegmentView = ({
               onChange={(newVals) => dispatch(setStartPathAction(newVals))}
             />
           </div>
-          <div className="flex self-center gap-2 mb-2">
+          <div className="mb-2 flex gap-2 self-center">
             <div className="flex-grow self-center">Start Tangent:</div>
             <AngleInput
               value={start.tangent}
@@ -120,7 +120,7 @@ const PathSegmentView = ({
               onChange={(newVals) => dispatch(setStartPathAction(newVals))}
             />
           </div>
-          <div className="flex self-center gap-2 mb-2">
+          <div className="mb-2 flex gap-2 self-center">
             <div className="flex-grow self-center">Start Heading:</div>
             <AngleInput
               value={start.heading}
@@ -128,7 +128,7 @@ const PathSegmentView = ({
               onChange={(newVals) => dispatch(setStartPathAction(newVals))}
             />
           </div>
-          <ol className="list-decimal marker:hover:cursor-move pl-4" start={1}>
+          <ol className="list-decimal pl-4 marker:hover:cursor-move" start={1}>
             {segments.map((segment, i) => (
               <PathSegment
                 key={i}
