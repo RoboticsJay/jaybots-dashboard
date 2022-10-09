@@ -1,5 +1,7 @@
 package com.acmerobotics.dashboard;
 
+import com.acmerobotics.dashboard.path.MakeTrajectory;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -14,6 +16,7 @@ import android.view.MenuItem;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.ValueProvider;
 import com.acmerobotics.dashboard.config.reflection.ReflectionConfig;
 import com.acmerobotics.dashboard.config.variable.BasicVariable;
@@ -35,7 +38,14 @@ import com.acmerobotics.dashboard.message.redux.UploadPath;
 import com.acmerobotics.dashboard.path.PathSegment;
 import com.acmerobotics.dashboard.path.reflection.FieldProvider;
 import com.acmerobotics.dashboard.path.reflection.ReflectionPath;
+import com.acmerobotics.dashboard.path.trajectorysequence.TrajectorySequence;
+import com.acmerobotics.dashboard.path.trajectorysequence.sequencesegment.SequenceSegment;
+import com.acmerobotics.dashboard.path.trajectorysequence.sequencesegment.TrajectorySegment;
+import com.acmerobotics.dashboard.path.trajectorysequence.sequencesegment.TurnSegment;
+import com.acmerobotics.dashboard.path.trajectorysequence.sequencesegment.WaitSegment;
+import com.acmerobotics.dashboard.path.util.DashboardUtil;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.geometry.Pose2d;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -218,6 +228,7 @@ public class FtcDashboard implements OpModeManagerImpl.Notifications {
     private CustomVariable configRoot; // guarded by configLock
     private final List<String[]> varsToRemove = new ArrayList<>(); // guarded by configLock
 
+    private TrajectorySequence uploadedPath;// = makeTrajectory(new UploadPath(new PathSegment(), new PathSegment[0]));
     private final Object pathLock = new Object();
     private ArrayList<FieldProvider> pathFields; // guarded by pathLock
 
@@ -270,6 +281,32 @@ public class FtcDashboard implements OpModeManagerImpl.Notifications {
                 for (TelemetryPacket packet : telemetryToSend.subList(0, telemetryToSend.size() - 1)) {
                     packet.fieldOverlay().clear();
                 }
+
+
+                Canvas fieldOverlay = telemetryToSend.get(telemetryToSend.size() - 1).fieldOverlay();
+                if (uploadedPath != null) for (int i = 0; i < uploadedPath.size(); i++) {
+                    SequenceSegment segment = uploadedPath.get(i);
+
+                    if (segment instanceof TrajectorySegment) {
+                        fieldOverlay.setStrokeWidth(1);
+                        fieldOverlay.setStroke("#4caf507a");
+
+                        DashboardUtil.drawSampledPath(fieldOverlay, ((TrajectorySegment) segment).getTrajectory().getPath());
+                    } else if (segment instanceof TurnSegment) {
+                        Pose2d pose = segment.getStartPose();
+
+                        fieldOverlay.setFill("#7c4dff7a");
+                        fieldOverlay.fillCircle(pose.getX(), pose.getY(), 2);
+                    } else if (segment instanceof WaitSegment) {
+                        Pose2d pose = segment.getStartPose();
+
+                        fieldOverlay.setStrokeWidth(1);
+                        fieldOverlay.setStroke("#dd2c007a");
+                        fieldOverlay.strokeCircle(pose.getX(), pose.getY(), 3);
+                    }
+                }
+                Log.d(TAG, "Sending Telementry Packet - " + uploadedPath);
+
                 sendAll(new ReceiveTelemetry(telemetryToSend));
 
                 long elapsedTime = System.currentTimeMillis() - startTime;
@@ -979,6 +1016,12 @@ public class FtcDashboard implements OpModeManagerImpl.Notifications {
                 break;
             }
             case UPLOAD_PATH: {
+//                try {
+//                    uploadedPath = MakeTrajectory.fromUploadedPath((UploadPath) msg);
+//                } catch (Exception e) {
+//                    Log.e(TAG, "Exception when making trajectory to render");
+//                    e.printStackTrace();
+//                }
                 synchronized (pathLock) {
                     for (FieldProvider field : pathFields)
                         field.set((UploadPath) msg);

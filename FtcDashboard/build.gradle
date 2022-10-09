@@ -18,8 +18,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_7
-        targetCompatibility JavaVersion.VERSION_1_7
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     lintOptions {
@@ -85,6 +85,7 @@ def javaSources() {
 }
 
 repositories {
+    maven { url = 'https://maven.brott.dev/' }
     flatDir {
         dirs '../libs'
     }
@@ -102,6 +103,10 @@ dependencies {
     implementation('org.nanohttpd:nanohttpd-websocket:2.3.1') {
         exclude module: 'nanohttpd'
     }
+
+    implementation 'org.apache.commons:commons-math3:3.6.1'
+
+    implementation 'com.acmerobotics.roadrunner:core:0.5.5'
 }
 
 task androidSourcesJar(type: Jar) {
