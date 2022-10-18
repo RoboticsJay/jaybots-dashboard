@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 
 import BaseView, {
@@ -15,21 +15,45 @@ const TelemetryView = ({
   isDraggable = false,
   isUnlocked = false,
 }: TelemetryViewProps) => {
-  const telemetry = useSelector((state: RootState) => state.telemetry);
+  const [log, setLog] = useState<string[]>([]);
+  const [data, setData] = useState<{ [key: string]: string }>({});
 
-  const latestPacket = telemetry[telemetry.length - 1];
-  const telemetryLines = Object.keys(latestPacket.data).map((key) => (
-    <span key={key}>
-      {key}: {latestPacket.data[key]}
-      <br />
-    </span>
+  const packets = useSelector((state: RootState) => state.telemetry);
+  useEffect(() => {
+    if (packets.length === 0) {
+      setLog([]);
+      setData({});
+      return;
+    }
+
+    setLog(
+      packets.reduce(
+        (acc, { log: newLog }) => (newLog.length === 0 ? acc : newLog),
+        log,
+      ),
+    );
+
+    setData(
+      packets.reduce(
+        (acc, { data: newData }) =>
+          Object.keys(newData).reduce(
+            (acc, k) => ({ ...acc, [k]: newData[k] }),
+            acc,
+          ),
+        data,
+      ),
+    );
+  }, [packets]);
+
+  const telemetryLines = Object.keys(data).map((key) => (
+    <span
+      key={key}
+      dangerouslySetInnerHTML={{ __html: `${key}: ${data[key]}<br />` }}
+    />
   ));
 
-  const telemetryLog = latestPacket.log.map((line, i) => (
-    <span key={i}>
-      {line}
-      <br />
-    </span>
+  const telemetryLog = log.map((line, i) => (
+    <span key={i} dangerouslySetInnerHTML={{ __html: `${line}<br />` }} />
   ));
 
   return (
