@@ -305,7 +305,7 @@ public class FtcDashboard implements OpModeManagerImpl.Notifications {
                         fieldOverlay.strokeCircle(pose.getX(), pose.getY(), 3);
                     }
                 }
-                Log.d(TAG, "Sending Telementry Packet - " + uploadedPath);
+//                Log.d(TAG, "Sending Telementry Packet - " + uploadedPath);
 
                 sendAll(new ReceiveTelemetry(telemetryToSend));
 

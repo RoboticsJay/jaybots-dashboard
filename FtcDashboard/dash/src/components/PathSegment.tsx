@@ -1,5 +1,4 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { segmentTypes, headingTypes, SegmentData } from '../store/types';
 import PointInput from './inputs/PointInput';
 import AngleInput from './inputs/AngleInput';
@@ -91,10 +90,5 @@ const PathSegment = ({
     )}
   </li>
 );
-
-PathSegment.propTypes = {
-  data: PropTypes.object.isRequired,
-  onChange: PropTypes.func.isRequired,
-};
 
 export default PathSegment;
