@@ -4,7 +4,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import PropTypes from 'prop-types';
 import { useDispatch, useSelector } from 'react-redux';
 import fieldImageName from '../assets/field.png';
 
@@ -423,10 +422,5 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
     </BaseView>
   );
 }
-
-PathView.propTypes = {
-  isDraggable: PropTypes.bool,
-  isUnlocked: PropTypes.bool,
-};
 
 export default PathView;

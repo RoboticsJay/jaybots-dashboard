@@ -28,9 +28,9 @@ android {
 }
 
 node {
-    pnpmVersion = "7.9.3"
+    pnpmVersion = "7.1.1"
     version = '18.7.0'
-    download = true
+    // download = true
     nodeModulesDir = file("${project.projectDir}/dash")
 }
 

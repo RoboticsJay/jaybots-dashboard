@@ -268,6 +268,9 @@ public class FtcDashboard implements OpModeManagerImpl.Notifications {
                         packet.fieldOverlay().clear();
                     }
 
+//                Log.d(TAG, "Sending Telementry Packet - " + uploadedPath);
+
+
 
                     Canvas fieldOverlay = telemetryToSend.get(telemetryToSend.size() - 1).fieldOverlay();
                     if (uploadedPath != null) for (int i = 0; i < uploadedPath.size(); i++) {
