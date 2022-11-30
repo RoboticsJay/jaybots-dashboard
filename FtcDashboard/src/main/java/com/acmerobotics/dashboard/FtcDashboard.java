@@ -53,6 +53,7 @@ import com.qualcomm.ftccommon.FtcEventLoop;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeManager;
+import com.qualcomm.robotcore.eventloop.opmode.OpModeManagerImpl;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeRegistrar;
 import com.qualcomm.robotcore.exception.RobotCoreException;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -73,7 +74,7 @@ import org.firstinspires.ftc.robotcore.external.stream.CameraStreamSource;
 //import org.firstinspires.ftc.robotcore.internal.opmode.AnnotatedOpModeClassFilter;
 //import org.firstinspires.ftc.robotcore.internal.opmode.InstanceOpModeManager;
 //import org.firstinspires.ftc.robotcore.internal.opmode.InstanceOpModeRegistrar;
-import org.firstinspires.ftc.robotcore.internal.opmode.OpModeManagerImpl;
+//import org.firstinspires.ftc.robotcore.internal.opmode.OpModeManagerImpl;
 import org.firstinspires.ftc.robotcore.internal.opmode.OpModeMeta;
 import org.firstinspires.ftc.robotcore.internal.opmode.RegisteredOpModes;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
@@ -102,11 +103,6 @@ public class FtcDashboard implements OpModeManagerImpl.Notifications {
     private static final String TAG = "FtcDashboard";
 
     /*
-     * Telemetry packets are dropped if they are sent faster than this interval.
-     */
-    private static final int MIN_TELEMETRY_PACKET_SPACING = 5; // ms
-
-    /*
      * Telemetry packets are batched for transmission and sent at this interval.
      */
     private static final int DEFAULT_TELEMETRY_TRANSMISSION_INTERVAL = 100; // ms
@@ -119,7 +115,6 @@ public class FtcDashboard implements OpModeManagerImpl.Notifications {
     private static final String PREFS_NAME = "FtcDashboard";
     private static final String PREFS_AUTO_ENABLE_KEY = "autoEnable";
 
-    // TODO: make this configurable?
     private static final Set<String> IGNORED_PACKAGES = new HashSet<>(Arrays.asList(
             "java",
             "android",
@@ -219,10 +214,8 @@ public class FtcDashboard implements OpModeManagerImpl.Notifications {
 
     private TelemetryPacket.Adapter telemetry;
     private ExecutorService telemetryExecutorService;
-    private long lastPacketTimestamp;
-    private volatile List<TelemetryPacket> pendingTelemetry = new ArrayList<>();
-    private final Object telemetryLock = new Object();
-    private int telemetryTransmissionInterval = DEFAULT_TELEMETRY_TRANSMISSION_INTERVAL;
+    private final List<TelemetryPacket> pendingTelemetry = new ArrayList<>(); // guarded by itself
+    private volatile int telemetryTransmissionInterval = DEFAULT_TELEMETRY_TRANSMISSION_INTERVAL;
 
     private final Object configLock = new Object();
     private CustomVariable configRoot; // guarded by configLock
@@ -257,66 +250,57 @@ public class FtcDashboard implements OpModeManagerImpl.Notifications {
         @Override
         public void run() {
             while (!Thread.currentThread().isInterrupted()) {
-                while (pendingTelemetry.isEmpty()) {
-                    try {
-                        Thread.sleep(MIN_TELEMETRY_PACKET_SPACING / 2);
-                    } catch (InterruptedException e) {
-                        break;
+                try {
+                    List<TelemetryPacket> telemetryToSend;
+
+                    synchronized (pendingTelemetry) {
+                        while (pendingTelemetry.isEmpty()) {
+                            pendingTelemetry.wait();
+                        }
+
+                        telemetryToSend = new ArrayList<>(pendingTelemetry);
+                        pendingTelemetry.clear();
                     }
-                }
-                long startTime = System.currentTimeMillis();
-                List<TelemetryPacket> telemetryToSend;
-                synchronized (telemetryLock) {
-                    telemetryToSend = new ArrayList<>(pendingTelemetry);
-                    pendingTelemetry.clear();
-                }
 
-                // justified paranoia: apparently telemetryToSend can be empty
-                if (telemetryToSend.isEmpty()) {
-                    continue;
-                }
-
-                // for now only the latest packet field overlay is used
-                // this helps save bandwidth, especially for more complex overlays
-                for (TelemetryPacket packet : telemetryToSend.subList(0, telemetryToSend.size() - 1)) {
-                    packet.fieldOverlay().clear();
-                }
-
-
-                Canvas fieldOverlay = telemetryToSend.get(telemetryToSend.size() - 1).fieldOverlay();
-                if (uploadedPath != null) for (int i = 0; i < uploadedPath.size(); i++) {
-                    SequenceSegment segment = uploadedPath.get(i);
-
-                    if (segment instanceof TrajectorySegment) {
-                        fieldOverlay.setStrokeWidth(1);
-                        fieldOverlay.setStroke("#4caf507a");
-
-                        DashboardUtil.drawSampledPath(fieldOverlay, ((TrajectorySegment) segment).getTrajectory().getPath());
-                    } else if (segment instanceof TurnSegment) {
-                        Pose2d pose = segment.getStartPose();
-
-                        fieldOverlay.setFill("#7c4dff7a");
-                        fieldOverlay.fillCircle(pose.getX(), pose.getY(), 2);
-                    } else if (segment instanceof WaitSegment) {
-                        Pose2d pose = segment.getStartPose();
-
-                        fieldOverlay.setStrokeWidth(1);
-                        fieldOverlay.setStroke("#dd2c007a");
-                        fieldOverlay.strokeCircle(pose.getX(), pose.getY(), 3);
+                    // only the latest packet field overlay is used
+                    // this helps save bandwidth, especially for more complex overlays
+                    for (TelemetryPacket packet : telemetryToSend.subList(0, telemetryToSend.size() - 1)) {
+                        packet.fieldOverlay().clear();
                     }
-                }
+
 //                Log.d(TAG, "Sending Telementry Packet - " + uploadedPath);
 
-                sendAll(new ReceiveTelemetry(telemetryToSend));
 
-                long elapsedTime = System.currentTimeMillis() - startTime;
-                long sleepTime = telemetryTransmissionInterval - elapsedTime;
-                if (sleepTime > 0) {
-                    try {
-                        Thread.sleep(sleepTime);
-                    } catch (InterruptedException e) {
-                        break;
+
+                    Canvas fieldOverlay = telemetryToSend.get(telemetryToSend.size() - 1).fieldOverlay();
+                    if (uploadedPath != null) for (int i = 0; i < uploadedPath.size(); i++) {
+                        SequenceSegment segment = uploadedPath.get(i);
+
+                        if (segment instanceof TrajectorySegment) {
+                            fieldOverlay.setStrokeWidth(1);
+                            fieldOverlay.setStroke("#4caf507a");
+
+                            DashboardUtil.drawSampledPath(fieldOverlay, ((TrajectorySegment) segment).getTrajectory().getPath());
+                        } else if (segment instanceof TurnSegment) {
+                            Pose2d pose = segment.getStartPose();
+
+                            fieldOverlay.setFill("#7c4dff7a");
+                            fieldOverlay.fillCircle(pose.getX(), pose.getY(), 2);
+                        } else if (segment instanceof WaitSegment) {
+                            Pose2d pose = segment.getStartPose();
+
+                            fieldOverlay.setStrokeWidth(1);
+                            fieldOverlay.setStroke("#dd2c007a");
+                            fieldOverlay.strokeCircle(pose.getX(), pose.getY(), 3);
+                        }
                     }
+                    Log.d(TAG, "Sending Telementry Packet - " + uploadedPath);
+
+                    sendAll(new ReceiveTelemetry(telemetryToSend));
+
+                    Thread.sleep(telemetryTransmissionInterval);
+                } catch (InterruptedException e) {
+                    return;
                 }
             }
         }
@@ -745,25 +729,38 @@ public class FtcDashboard implements OpModeManagerImpl.Notifications {
     }
 
     /**
-     * Sends telemetry information to all instance clients.
+     * Queues a telemetry packet to be sent to all clients. Packets are sent in batches of
+     * approximate period {@link #getTelemetryTransmissionInterval()}. Clients display the most
+     * recent value received for each key, and the data is cleared upon op mode init or a call to
+     * {@link #clearTelemetry()}.
+     *
      * @param telemetryPacket packet to send
      */
     public void sendTelemetryPacket(TelemetryPacket telemetryPacket) {
-        long timestamp = telemetryPacket.addTimestamp();
+        telemetryPacket.addTimestamp();
 
-        if ((timestamp - lastPacketTimestamp) < MIN_TELEMETRY_PACKET_SPACING) {
-            return;
-        }
-
-        synchronized (telemetryLock) {
+        synchronized (pendingTelemetry) {
             pendingTelemetry.add(telemetryPacket);
-        }
 
-        lastPacketTimestamp = timestamp;
+            pendingTelemetry.notifyAll();
+        }
     }
 
     /**
-     * Returns a telemetry object that proxies {@link #sendTelemetryPacket(TelemetryPacket)}.
+     * Clears telemetry data from all clients.
+     */
+    public void clearTelemetry() {
+        synchronized (pendingTelemetry) {
+            pendingTelemetry.clear();
+
+            sendAll(new ReceiveTelemetry(Collections.<TelemetryPacket>emptyList()));
+        }
+    }
+
+    /**
+     * Returns a {@link Telemetry} object that delegates to the telemetry methods of this class.
+     * Beware that the implementation of the interface is incomplete, and users should test each
+     * method they intend to use.
      */
     public Telemetry getTelemetry() {
         return telemetry;
@@ -1049,6 +1046,10 @@ public class FtcDashboard implements OpModeManagerImpl.Notifications {
         synchronized (opModeLock) {
             activeOpModeStatus = RobotStatus.OpModeStatus.INIT;
             activeOpMode = opMode;
+        }
+
+        if (!(opMode instanceof OpModeManagerImpl.DefaultOpMode)) {
+            clearTelemetry();
         }
     }
 
