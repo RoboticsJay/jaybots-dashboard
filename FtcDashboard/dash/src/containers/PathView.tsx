@@ -45,7 +45,10 @@ function PathView({ isUnlocked, isDraggable }: PathSegmentViewProps) {
     overlay,
   } = useSelector(({ path, telemetry }: RootState) => ({
     path,
-    overlay: telemetry[telemetry.length - 1].fieldOverlay,
+    overlay:
+      telemetry.length === 0
+        ? { ops: [] }
+        : telemetry[telemetry.length - 1].fieldOverlay,
   }));
   const points = [start].concat(segments);
   const [image] = useImage(fieldImageName);
